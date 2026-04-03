@@ -88,6 +88,14 @@ defmodule Hello do
     end
   end
 
+  def hello(x, foo: 5, bar: x) do
+    x
+  end
+  
+
+  def hello(x, %{foo: 5}) do
+    x
+  end
 end
 ```
 
@@ -103,4 +111,143 @@ show_ast(5 * 4) |> IO.inspect()
 show_ast_alt(5 * 4) |> IO.inspect()
 
 pirate()
+
+hello(7, foo: 5, bar: 7)
+hello(7, %{foo: 5, bar: 7})
+```
+
+## Some ASTs
+
+```elixir
+quote(do: nil) |> dbg()
+quote(do: false) |> dbg()
+quote(do: true) |> dbg()
+quote(do: :myAtom) |> dbg()
+quote(do: String) |> dbg()
+quote(do: Kernel) |> dbg()
+quote(do: "Hello") |> dbg()
+quote(do: 5.5) |> dbg()
+quote(do: 5) |> dbg()
+quote(do: []) |> dbg()
+quote(do: [1, 2, 3]) |> dbg()
+quote(do: [foo: 5, bar: 6]) |> dbg()
+quote(do: [{:foo, 5}, {:bar, 6}]) |> dbg()
+quote(do: %{}) |> dbg()
+quote(do: %{x: 5}) |> dbg()
+quote(do: ~c"Hello") |> dbg()
+
+quote(do: !true) |> dbg()
+
+quote do
+  if x do
+    y
+  end
+end
+|> dbg()
+
+quote do
+  if x do
+    y
+  else
+    z
+  end
+end
+|> dbg()
+
+quote do
+  for x <- y, if: x > 5 do
+    x
+  end
+end
+|> dbg()
+
+quote do
+  for x <- y, reduce: 0 do
+    acc -> acc + x
+  end
+end
+|> dbg()
+
+quote do
+  def a(b) do
+    b
+  end
+end
+|> dbg()
+
+quote do
+  fn x -> x end
+end
+|> dbg()
+
+quote do
+  fn
+    0 -> 0
+    1 -> 2
+    x -> x
+    _ -> y
+  end
+end
+|> dbg()
+
+quote do
+  quote do
+    x
+  end
+end
+|> dbg()
+
+quote do
+  defmodule Hello do
+    @foo
+    @bar 1
+  end
+end
+|> dbg()
+
+quote do
+  1
+  2
+  3
+end
+|> dbg()
+
+quote unquote: false do
+  1
+  unquote(2)
+  3
+end
+|> dbg()
+
+quote unquote: false do
+  {:foo, 5}
+  {:bar, 5}
+  {:baz, 5}
+end
+|> dbg()
+
+quote line: 10, generated: true do
+  x
+end
+|> dbg()
+
+quote line: 10, file: "custom.ex", generated: true do
+  x
+end
+|> dbg()
+
+quote do
+  {1, 2, 3}
+end
+|> dbg
+
+nil
+```
+
+```elixir
+quote do
+  def hello(x, %{foo: x}) do
+    x
+  end
+end
 ```
