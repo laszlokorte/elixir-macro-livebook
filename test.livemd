@@ -1,0 +1,106 @@
+# Macros
+
+## Mashup of various Macro definitions
+
+```elixir
+defmodule Pirate do
+  # define callback to be run by another module right before its compiled
+  defmacro __before_compile__(_ctx) do
+    # code to inject must be quoted into an ast
+    quote do
+      # inject pirate function into other module
+      def pirate do
+        @arrrgh
+      end
+    end
+  end
+
+  # define callback for injecting code into module the `use Priate`
+  defmacro __using__(_args) do
+    # code to inject must be quoted into an ast
+    quote do
+      # import the pirate module into the target module to make all functions available
+      import unquote(__MODULE__)
+      # setup the @arrrg attribute to store multiple values
+      Module.register_attribute(__MODULE__, :arrrgh, accumulate: true)
+
+      # register the compilation hook defined above in the target module
+      @before_compile Pirate
+    end
+  end
+
+  # define a macro that can be from other modules to generate code
+  defmacro enter(ship) do
+    quote do
+      @arrrgh unquote(ship)
+    end
+  end
+
+  # define a classic function that may be called by other modules
+  def shipname do
+    "The best ship"
+  end
+end
+
+defmodule Hello do
+  # use the Pirate module to inject code according to its __using__ macro
+  use Pirate
+
+  # the Priate module provides macros and functions that we can call now
+  # enter is a macro that add an entry to the @arrrgh list
+  enter("Myship")
+  enter("ShipIt")
+  # shipname is the function from the Pirate module to generate a name for a ship
+  enter(shipname())
+
+  # we can redefine the + operator as function
+  def a + b do
+    {:intercepted, :addition, a, b}
+  end
+
+  # we can redefine the multiplication operator as macro
+  defmacro a * b do
+    # a and b are AST nodes from the call side
+    # a macro is required to return n AST
+    # we need to unquote to inject outside AST nodes
+    quote do
+      {:intercepted, :mul, unquote(a), unquote(b)}
+    end
+  end
+
+  # we can also define a macro with only one argument
+  defmacro show_ast(x) do
+    # x is  the AST node from the call side
+    # we need to return a quoted AST again
+    quote do
+      # unquoting leads to to the x AST node to be injected and later evaluated
+      # Macro.escape turns the AST node into a AST node representing the AST node
+      # which results in the AST node itself becoming the final value.
+      {:ast, unquote(Macro.escape(x)), unquote(x)}
+    end
+  end
+
+  defmacro show_ast_alt(x) do
+    # instead of using unquote for each variable we can past a list of variables to unquote.
+    # By doing so unquote itself can no longer be used inside the quote block
+    quote bind_quoted: [x: x, xe: Macro.escape(x)] do
+      {:ast, xe, x}
+    end
+  end
+
+end
+```
+
+```elixir
+import Kernel, except: [+: 2, *: 2]
+import Hello
+require Hello
+
+(5 + 4) |> IO.inspect()
+(5 * 4) |> IO.inspect()
+
+show_ast(5 * 4) |> IO.inspect()
+show_ast_alt(5 * 4) |> IO.inspect()
+
+pirate()
+```
